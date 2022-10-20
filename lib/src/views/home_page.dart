@@ -1,59 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list/src/controllers/home_controller.dart';
 
-class HomePage extends StatelessWidget {
+import '../controllers/home_controller.dart';
+
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    _start() {
-      return Container();
-    }
+  State<HomePage> createState() => _HomePageState();
+}
 
-    _loading() {
-      return const Center(child: CircularProgressIndicator());
-    }
+class _HomePageState extends State<HomePage> {
+  final controller = HomeController();
 
-    _success() {
-      return ListView.builder(
-        itemCount: 50,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text('Item $index'),
-          );
+  _start() {
+    return Container();
+  }
+
+  _loading() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  _success() {
+    return ListView.builder(
+      itemCount: controller.todos.length,
+      itemBuilder: (context, index) {
+        var todo = controller.todos[index];
+        return ListTile(
+          leading: Checkbox(
+            value: todo.completed,
+            onChanged: (bool? value) {},
+          ),
+          title: Text(todo.title!),
+        );
+      },
+    );
+  }
+
+  _error() {
+    return Center(
+      child: ElevatedButton(
+        onPressed: () {
+          controller.start();
         },
-      );
-    }
+        child: const Text('Tentar novamente'),
+      ),
+    );
+  }
 
-    _error() {
-      return Center(
-        child: ElevatedButton(
-          onPressed: () {},
-          child: const Text('Tentar novamente'),
-        ),
-      );
+  stateManagement(HomeState state) {
+    switch (state) {
+      case HomeState.start:
+        return _start();
+      case HomeState.loading:
+        return _loading();
+      case HomeState.error:
+        return _error();
+      case HomeState.success:
+        return _success();
+      default:
+        return _start();
     }
+  }
 
-    stateManagement(HomeState state) {
-      switch (state) {
-        case HomeState.start:
-          return _start();
-        case HomeState.loading:
-          return _loading();
-        case HomeState.error:
-          return _error();
-        case HomeState.success:
-          return _success();
-        default:
-          return _start();
-      }
-    }
+  @override
+  void initState() {
+    super.initState();
 
+    controller.start();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('List Todo\'s'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              controller.start();
+            },
+            icon: const Icon(Icons.refresh_outlined),
+          )
+        ],
       ),
-      body: stateManagement(),
+      body: AnimatedBuilder(
+        animation: controller.state,
+        builder: (context, child) {
+          return stateManagement(controller.state.value);
+        },
+      ),
     );
   }
 }
